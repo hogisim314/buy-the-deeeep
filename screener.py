@@ -574,7 +574,9 @@ def main():
         results = results[:max_results]
 
     if results:
+        matched_tickers = [result["ticker"] for result in results]
         logger.info("조건 충족 종목 수: %d개", len(results))
+        logger.info("조건 충족 티커: %s", ", ".join(matched_tickers))
         for result in results:
             try:
                 context = get_company_context(result["ticker"], news_count=news_count)
