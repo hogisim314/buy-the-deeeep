@@ -6,7 +6,7 @@
 2. 이평선 역배열 (`MA_SHORT < MA_MID < MA_LONG`)
 3. 시가 갭이 전일 종가 대비 -3% 이하
 
-해당 조건을 만족하는 S&P 500 종목을 찾아 텔레그램으로 전송합니다.
+해당 조건을 만족하는 자산을 찾아 텔레그램으로 전송합니다.
 
 전송 내용:
 
@@ -49,6 +49,8 @@ cp .env.example .env
 - `MAX_RESULTS=10` (전송 최대 종목 수)
 - `LOOKBACK_DAYS=260`
 - `NEWS_COUNT=3`
+- `UNIVERSE=sp500` (`sp500`, `commodities`, `energy`, `metals` 중 선택)
+- `CUSTOM_TICKERS=` (직접 지정 시 `UNIVERSE`보다 우선. 예: `CL=F,GC=F,USO,GLD`)
 
 로그(로테이션) 파라미터:
 
@@ -62,6 +64,14 @@ cp .env.example .env
 ```bash
 source .venv/bin/activate
 python screener.py
+```
+
+원자재/원유 예시:
+
+```bash
+python screener.py --universe commodities
+python screener.py --universe energy
+python screener.py --tickers "CL=F GC=F SI=F"
 ```
 
 특정 날짜 기준 실행:
@@ -82,6 +92,13 @@ python screener.py 2026-03-13
 
 ```bash
 ./.venv/bin/python backtest_next_day.py --days 10
+```
+
+원자재 백테스트 예시:
+
+```bash
+./.venv/bin/python backtest_next_day.py --universe commodities --days 20
+./.venv/bin/python backtest_next_day.py --tickers "CL=F GC=F" --start 2026-01-01 --end 2026-03-13
 ```
 
 옵션:
@@ -114,6 +131,11 @@ crontab -e
   - 위키피디아 S&P 500 테이블을 읽어 티커 리스트를 반환합니다.
   - 티커 내 `.` 문자는 야후 파이낸스 형식에 맞게 `-`로 치환합니다.
 
+- `resolve_tickers(universe, custom_tickers)`
+  - 스크리닝 대상 자산군을 결정합니다.
+  - `sp500`, `commodities`, `energy`, `metals` 프리셋을 지원합니다.
+  - `CUSTOM_TICKERS` 또는 `--tickers`가 있으면 해당 목록을 우선 사용합니다.
+
 - `download_ohlcv(tickers, lookback_days)`
   - 지정한 티커들의 OHLCV 데이터를 `lookback_days` 범위로 다운로드합니다.
   - 내부적으로 `yfinance.download(..., group_by="ticker")` 형식의 멀티인덱스 DataFrame을 반환합니다.
@@ -134,9 +156,9 @@ crontab -e
   - 회사요약이 비어있으면 위키 검색 결과 요약으로 보완합니다.
   - Yahoo, TradingView 차트 링크를 함께 생성해 반환합니다.
 
-- `build_messages(results, ma_short, ma_mid, ma_long)`
+- `build_messages(results, ma_short, ma_mid, ma_long, universe_label)`
   - 스크리닝 결과를 텔레그램 다중 메시지 포맷으로 변환합니다.
-  - 첫 메시지는 요약, 이후는 종목별 상세(기술지표 + 회사정보 + 차트링크 + 뉴스)입니다.
+  - 첫 메시지는 요약, 이후는 자산별 상세(기술지표 + 기본정보 + 차트링크 + 뉴스)입니다.
 
 - `send_telegram(bot_token, chat_id, message)`
   - 텔레그램 Bot API `sendMessage`를 호출해 메시지를 발송합니다.

@@ -13,7 +13,7 @@ def get_signal_and_next_row(sub: pd.DataFrame, target_date: pd.Timestamp):
         return None, None
 
     signal_pos = sub.index.get_loc(eligible.index[-1])
-    signal_idx = int(signal_pos) if isinstance(signal_pos, int) else int(signal_pos.start)
+    signal_idx = screener.resolve_index_position(signal_pos)
 
     next_idx = signal_idx + 1
     if next_idx >= len(sub):
@@ -27,6 +27,8 @@ def main():
     parser.add_argument("--start", default=None, help="시작일 YYYY-MM-DD (미입력 시 최근 N영업일)")
     parser.add_argument("--end", default=None, help="종료일 YYYY-MM-DD (기본: 오늘)")
     parser.add_argument("--days", type=int, default=60, help="최근 영업일 수 (start 미입력 시 사용)")
+    parser.add_argument("--universe", default=None, help="대상 자산군 (sp500, commodities, energy, metals)")
+    parser.add_argument("--tickers", default=None, help="직접 백테스트할 티커 목록. 쉼표 또는 공백 구분")
     args = parser.parse_args()
 
     bb_window = int(os.getenv("BB_WINDOW", "20"))
@@ -38,6 +40,8 @@ def main():
     min_bb_breach_pct = float(os.getenv("MIN_BB_BREACH_PCT", "0.5"))
     min_gap_pct = float(os.getenv("MIN_GAP_PCT", "-3"))
     lookback_days = int(os.getenv("LOOKBACK_DAYS", "260"))
+    universe = args.universe or os.getenv("UNIVERSE", "sp500")
+    custom_tickers = args.tickers or os.getenv("CUSTOM_TICKERS", "")
 
     end_date = pd.Timestamp(args.end) if args.end else pd.Timestamp(datetime.now(timezone.utc).date())
     if args.start:
@@ -50,7 +54,7 @@ def main():
     fetch_start = (start_date - pd.Timedelta(days=lookback_days + 20)).strftime("%Y-%m-%d")
     fetch_end = (end_date + pd.Timedelta(days=3)).strftime("%Y-%m-%d")
 
-    tickers = screener.get_sp500_tickers()
+    tickers, universe_label = screener.resolve_tickers(universe=universe, custom_tickers=custom_tickers)
     data = pd.DataFrame()
     data = screener.yf.download(
         tickers=tickers,
@@ -116,6 +120,7 @@ def main():
     daily = df.groupby("date")["next_day_ret_pct"].agg(["count", "mean"]).reset_index()
 
     print("=== 백테스트 요약 ===")
+    print(f"자산군: {universe_label}")
     print(f"기간: {start_date.date()} ~ {end_date.date()} (영업일 {len(signal_dates)}일)")
     print("가정: 신호일 종가 매수 -> 다음 영업일 종가 매도")
     print(f"총 거래 수: {len(df)}")

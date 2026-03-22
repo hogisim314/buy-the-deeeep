@@ -13,6 +13,38 @@ from datetime import datetime, timedelta, timezone
 from logging.handlers import RotatingFileHandler
 
 
+PRESET_UNIVERSES: dict[str, dict[str, object]] = {
+    "sp500": {
+        "label": "S&P500",
+    },
+    "commodities": {
+        "label": "원자재",
+        "tickers": [
+            "CL=F",
+            "BZ=F",
+            "NG=F",
+            "GC=F",
+            "SI=F",
+            "HG=F",
+            "ZC=F",
+            "ZW=F",
+            "ZS=F",
+            "KC=F",
+            "CT=F",
+            "SB=F",
+        ],
+    },
+    "energy": {
+        "label": "에너지",
+        "tickers": ["CL=F", "BZ=F", "NG=F", "RB=F", "HO=F"],
+    },
+    "metals": {
+        "label": "금속",
+        "tickers": ["GC=F", "SI=F", "PL=F", "PA=F", "HG=F"],
+    },
+}
+
+
 def get_sp500_tickers() -> list[str]:
     csv_url = "https://datahub.io/core/s-and-p-500-companies/r/constituents.csv"
     wiki_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
@@ -29,6 +61,56 @@ def get_sp500_tickers() -> list[str]:
     table = pd.read_html(wiki_url)[0]
     tickers = table["Symbol"].astype(str).str.replace(".", "-", regex=False).tolist()
     return tickers
+
+
+def parse_ticker_list(raw_value: str | None) -> list[str]:
+    if not raw_value:
+        return []
+
+    parts = re.split(r"[\s,]+", raw_value.strip())
+    tickers = []
+    seen = set()
+    for part in parts:
+        ticker = part.strip().upper().replace(".", "-")
+        if not ticker or ticker in seen:
+            continue
+        seen.add(ticker)
+        tickers.append(ticker)
+    return tickers
+
+
+def get_supported_universes() -> list[str]:
+    return sorted(PRESET_UNIVERSES.keys())
+
+
+def resolve_tickers(universe: str | None, custom_tickers: str | None = None) -> tuple[list[str], str]:
+    manual_tickers = parse_ticker_list(custom_tickers)
+    if manual_tickers:
+        return manual_tickers, "커스텀"
+
+    universe_key = (universe or "sp500").strip().lower()
+    preset = PRESET_UNIVERSES.get(universe_key)
+    if preset is None:
+        supported = ", ".join(get_supported_universes())
+        raise ValueError(f"지원하지 않는 UNIVERSE입니다: {universe_key} (지원값: {supported})")
+
+    preset_tickers = preset.get("tickers")
+    if preset_tickers:
+        return [str(ticker) for ticker in preset_tickers], str(preset["label"])
+
+    return get_sp500_tickers(), str(preset["label"])
+
+
+def resolve_index_position(indexer) -> int:
+    if isinstance(indexer, int):
+        return indexer
+    if isinstance(indexer, slice):
+        if indexer.start is None:
+            raise ValueError("유효한 인덱스 위치를 찾을 수 없습니다.")
+        return int(indexer.start)
+    if hasattr(indexer, "__len__") and len(indexer) > 0:
+        return int(indexer[0])
+    raise ValueError("유효한 인덱스 위치를 찾을 수 없습니다.")
 
 
 def setup_logging(log_file: str, log_level: str, log_max_bytes: int, log_backup_count: int) -> logging.Logger:
@@ -132,7 +214,7 @@ def calculate_signals(
             return None
         target_pos = eligible.index[-1]
         loc = sub.index.get_loc(target_pos)
-        target_idx = int(loc) if isinstance(loc, (int,)) else int(loc.start)
+        target_idx = resolve_index_position(loc)
 
     if target_idx < 1:
         return None
@@ -223,7 +305,9 @@ def send_telegram(bot_token: str, chat_id: str, message: str):
             lowered = str(description).lower()
 
             if response.status_code == 429:
-                params = json_body.get("parameters") if isinstance(json_body.get("parameters"), dict) else {}
+                params = json_body.get("parameters") or {}
+                if not isinstance(params, dict):
+                    params = {}
                 retry_after = int(params.get("retry_after", 3))
                 time.sleep(max(retry_after, 1))
                 continue
@@ -429,16 +513,16 @@ def get_company_context(ticker: str, news_count: int) -> dict:
     }
 
 
-def build_messages(results: list[dict], ma_short: int, ma_mid: int, ma_long: int) -> list[str]:
+def build_messages(results: list[dict], ma_short: int, ma_mid: int, ma_long: int, universe_label: str) -> list[str]:
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if not results:
-        return [f"📉 S&P500 스크리닝 결과 ({now_str})\n조건 만족 종목 없음"]
+        return [f"📉 {universe_label} 스크리닝 결과 ({now_str})\n조건 만족 자산 없음"]
 
     messages = [
         "\n".join(
             [
-                f"📉 S&P500 스크리닝 결과 ({now_str})",
-                f"조건 만족 종목: {len(results)}개",
+                f"📉 {universe_label} 스크리닝 결과 ({now_str})",
+                f"조건 만족 자산: {len(results)}개",
                 "(조건: BB 하단 이탈 + 이평 역배열 + 갭 -3% 이하)",
             ]
         )
@@ -458,15 +542,15 @@ def build_messages(results: list[dict], ma_short: int, ma_mid: int, ma_long: int
 
         detail_lines = [
             f"<b>{escape(r['ticker'])}</b> ({escape(r['date'])})",
-            f"- 회사명: {escape(r.get('company_name', r['ticker']))}",
+            f"- 이름: {escape(r.get('company_name', r['ticker']))}",
             f"- 종가: {r['close']} (전일대비 {r['close_change_pct']}%)",
             f"- 갭: {r['gap_pct']}% (시가 {r['open']} / 전일종가 {r['prev_close']})",
             f"- BB 하단 이탈 강도: {r.get('bb_breach_pct', 0)}%",
             f"- BB 하단: {r['lower_band']}",
             f"- 이평: MA{ma_short}={r['ma_short']} < MA{ma_mid}={r['ma_mid']} < MA{ma_long}={r['ma_long']}",
             f"- 시가총액: {escape(r.get('market_cap', 'N/A'))}",
-            f"- 업종: {escape(r.get('sector', 'N/A'))}",
-            f"- 회사요약: {escape(r.get('summary', '정보 없음'))}",
+            f"- 분류: {escape(r.get('sector', 'N/A'))}",
+            f"- 요약: {escape(r.get('summary', '정보 없음'))}",
             "- 차트 바로보기:",
             f"  • TradingView: <a href=\"{escape(r.get('chart_tradingview', ''), quote=True)}\">열기</a>",
             f"  • Yahoo: <a href=\"{escape(r.get('chart_yahoo', ''), quote=True)}\">열기</a>",
@@ -494,12 +578,22 @@ def load_env_from_dotenv(path: str = ".env"):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="S&P500 기술적 조건 스크리너")
+    parser = argparse.ArgumentParser(description="자산군별 기술적 조건 스크리너")
     parser.add_argument(
         "date",
         nargs="?",
         default=None,
         help="기준일 (YYYY-MM-DD). 미입력 시 최신 거래일 기준",
+    )
+    parser.add_argument(
+        "--universe",
+        default=None,
+        help="대상 자산군 (sp500, commodities, energy, metals)",
+    )
+    parser.add_argument(
+        "--tickers",
+        default=None,
+        help="직접 스크리닝할 티커 목록. 쉼표 또는 공백 구분 예: CL=F,GC=F,USO,GLD",
     )
     args = parser.parse_args()
 
@@ -535,14 +629,20 @@ def main():
     max_results = int(os.getenv("MAX_RESULTS", "10"))
     lookback_days = int(os.getenv("LOOKBACK_DAYS", "260"))
     news_count = int(os.getenv("NEWS_COUNT", "3"))
+    universe = args.universe or os.getenv("UNIVERSE", "sp500")
+    custom_tickers = args.tickers or os.getenv("CUSTOM_TICKERS", "")
+
+    try:
+        tickers, universe_label = resolve_tickers(universe=universe, custom_tickers=custom_tickers)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
 
     if target_date is None:
-        logger.info("스크리닝 시작 (기준일: 최신 거래일)")
+        logger.info("스크리닝 시작 (%s, 기준일: 최신 거래일)", universe_label)
     else:
-        logger.info("스크리닝 시작 (기준일: %s)", target_date.strftime("%Y-%m-%d"))
+        logger.info("스크리닝 시작 (%s, 기준일: %s)", universe_label, target_date.strftime("%Y-%m-%d"))
 
-    tickers = get_sp500_tickers()
-    logger.info("S&P500 티커 수집 완료: %d개", len(tickers))
+    logger.info("스크리닝 대상 수집 완료 (%s): %d개", universe_label, len(tickers))
 
     data = download_ohlcv(tickers, lookback_days, target_date=target_date)
     logger.info("가격 데이터 다운로드 완료")
@@ -575,7 +675,7 @@ def main():
 
     if results:
         matched_tickers = [result["ticker"] for result in results]
-        logger.info("조건 충족 종목 수: %d개", len(results))
+        logger.info("조건 충족 자산 수: %d개", len(results))
         logger.info("조건 충족 티커: %s", ", ".join(matched_tickers))
         for result in results:
             try:
@@ -590,9 +690,9 @@ def main():
                 logger.debug("회사 정보 조회 실패 (%s)", result["ticker"])
             result.update(context)
     else:
-        logger.info("조건 충족 종목 없음")
+        logger.info("조건 충족 자산 없음")
 
-    messages = build_messages(results, ma_short=ma_short, ma_mid=ma_mid, ma_long=ma_long)
+    messages = build_messages(results, ma_short=ma_short, ma_mid=ma_mid, ma_long=ma_long, universe_label=universe_label)
 
     if not bot_token or not chat_id:
         for index, message in enumerate(messages, start=1):
@@ -604,8 +704,8 @@ def main():
         return
 
     send_telegram_messages(bot_token, chat_id, messages)
-    logger.info("텔레그램 전송 완료. 종목 수: %d", len(results))
-    print(f"[OK] 텔레그램 전송 완료. 종목 수: {len(results)}")
+    logger.info("텔레그램 전송 완료. 자산 수: %d", len(results))
+    print(f"[OK] 텔레그램 전송 완료. 자산 수: {len(results)}")
 
 
 if __name__ == "__main__":

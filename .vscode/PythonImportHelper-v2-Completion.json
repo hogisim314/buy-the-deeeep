@@ -1,0 +1,371 @@
+[
+    {
+        "label": "argparse",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "argparse",
+        "description": "argparse",
+        "detail": "argparse",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timedelta",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "timezone",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "screener",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "screener",
+        "description": "screener",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "math",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "math",
+        "description": "math",
+        "detail": "math",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "re",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "re",
+        "description": "re",
+        "detail": "re",
+        "documentation": {}
+    },
+    {
+        "label": "logging",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "logging",
+        "description": "logging",
+        "detail": "logging",
+        "documentation": {}
+    },
+    {
+        "label": "requests",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "requests",
+        "description": "requests",
+        "detail": "requests",
+        "documentation": {}
+    },
+    {
+        "label": "yfinance",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "yfinance",
+        "description": "yfinance",
+        "detail": "yfinance",
+        "documentation": {}
+    },
+    {
+        "label": "escape",
+        "importPath": "html",
+        "description": "html",
+        "isExtraImport": true,
+        "detail": "html",
+        "documentation": {}
+    },
+    {
+        "label": "quote",
+        "importPath": "urllib.parse",
+        "description": "urllib.parse",
+        "isExtraImport": true,
+        "detail": "urllib.parse",
+        "documentation": {}
+    },
+    {
+        "label": "RotatingFileHandler",
+        "importPath": "logging.handlers",
+        "description": "logging.handlers",
+        "isExtraImport": true,
+        "detail": "logging.handlers",
+        "documentation": {}
+    },
+    {
+        "label": "get_signal_and_next_row",
+        "kind": 2,
+        "importPath": "backtest_next_day",
+        "description": "backtest_next_day",
+        "peekOfCode": "def get_signal_and_next_row(sub: pd.DataFrame, target_date: pd.Timestamp):\n    eligible = sub[sub.index <= target_date]\n    if eligible.empty:\n        return None, None\n    signal_pos = sub.index.get_loc(eligible.index[-1])\n    signal_idx = screener.resolve_index_position(signal_pos)\n    next_idx = signal_idx + 1\n    if next_idx >= len(sub):\n        return None, None\n    return sub.iloc[signal_idx], sub.iloc[next_idx]",
+        "detail": "backtest_next_day",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "backtest_next_day",
+        "description": "backtest_next_day",
+        "peekOfCode": "def main():\n    parser = argparse.ArgumentParser(description=\"신호 발생 다음날 수익률 백테스트\")\n    parser.add_argument(\"--start\", default=None, help=\"시작일 YYYY-MM-DD (미입력 시 최근 N영업일)\")\n    parser.add_argument(\"--end\", default=None, help=\"종료일 YYYY-MM-DD (기본: 오늘)\")\n    parser.add_argument(\"--days\", type=int, default=60, help=\"최근 영업일 수 (start 미입력 시 사용)\")\n    parser.add_argument(\"--universe\", default=None, help=\"대상 자산군 (sp500, commodities, energy, metals)\")\n    parser.add_argument(\"--tickers\", default=None, help=\"직접 백테스트할 티커 목록. 쉼표 또는 공백 구분\")\n    args = parser.parse_args()\n    bb_window = int(os.getenv(\"BB_WINDOW\", \"20\"))\n    bb_std = float(os.getenv(\"BB_STD\", \"2\"))",
+        "detail": "backtest_next_day",
+        "documentation": {}
+    },
+    {
+        "label": "get_sp500_tickers",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def get_sp500_tickers() -> list[str]:\n    csv_url = \"https://datahub.io/core/s-and-p-500-companies/r/constituents.csv\"\n    wiki_url = \"https://en.wikipedia.org/wiki/List_of_S%26P_500_companies\"\n    try:\n        table = pd.read_csv(csv_url)\n        if \"Symbol\" in table.columns:\n            tickers = table[\"Symbol\"].astype(str).str.replace(\".\", \"-\", regex=False).tolist()\n            if tickers:\n                return tickers\n    except Exception:",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "parse_ticker_list",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def parse_ticker_list(raw_value: str | None) -> list[str]:\n    if not raw_value:\n        return []\n    parts = re.split(r\"[\\s,]+\", raw_value.strip())\n    tickers = []\n    seen = set()\n    for part in parts:\n        ticker = part.strip().upper().replace(\".\", \"-\")\n        if not ticker or ticker in seen:\n            continue",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "get_supported_universes",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def get_supported_universes() -> list[str]:\n    return sorted(PRESET_UNIVERSES.keys())\ndef resolve_tickers(universe: str | None, custom_tickers: str | None = None) -> tuple[list[str], str]:\n    manual_tickers = parse_ticker_list(custom_tickers)\n    if manual_tickers:\n        return manual_tickers, \"커스텀\"\n    universe_key = (universe or \"sp500\").strip().lower()\n    preset = PRESET_UNIVERSES.get(universe_key)\n    if preset is None:\n        supported = \", \".join(get_supported_universes())",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "resolve_tickers",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def resolve_tickers(universe: str | None, custom_tickers: str | None = None) -> tuple[list[str], str]:\n    manual_tickers = parse_ticker_list(custom_tickers)\n    if manual_tickers:\n        return manual_tickers, \"커스텀\"\n    universe_key = (universe or \"sp500\").strip().lower()\n    preset = PRESET_UNIVERSES.get(universe_key)\n    if preset is None:\n        supported = \", \".join(get_supported_universes())\n        raise ValueError(f\"지원하지 않는 UNIVERSE입니다: {universe_key} (지원값: {supported})\")\n    preset_tickers = preset.get(\"tickers\")",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "resolve_index_position",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def resolve_index_position(indexer) -> int:\n    if isinstance(indexer, int):\n        return indexer\n    if isinstance(indexer, slice):\n        if indexer.start is None:\n            raise ValueError(\"유효한 인덱스 위치를 찾을 수 없습니다.\")\n        return int(indexer.start)\n    if hasattr(indexer, \"__len__\") and len(indexer) > 0:\n        return int(indexer[0])\n    raise ValueError(\"유효한 인덱스 위치를 찾을 수 없습니다.\")",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "setup_logging",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def setup_logging(log_file: str, log_level: str, log_max_bytes: int, log_backup_count: int) -> logging.Logger:\n    logger = logging.getLogger(\"screener\")\n    if logger.handlers:\n        return logger\n    level = getattr(logging, log_level.upper(), logging.INFO)\n    logger.setLevel(level)\n    log_dir = os.path.dirname(log_file)\n    if log_dir:\n        os.makedirs(log_dir, exist_ok=True)\n    formatter = logging.Formatter(\"%(asctime)s [%(levelname)s] %(message)s\")",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "parse_target_date",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def parse_target_date(date_text: str | None) -> pd.Timestamp | None:\n    if not date_text:\n        return None\n    parsed = datetime.strptime(date_text, \"%Y-%m-%d\")\n    return pd.Timestamp(parsed.date())\ndef download_ohlcv(tickers: list[str], lookback_days: int, target_date: pd.Timestamp | None = None) -> pd.DataFrame:\n    now_utc = datetime.now(timezone.utc)\n    if target_date is None:\n        start = (now_utc - timedelta(days=lookback_days)).strftime(\"%Y-%m-%d\")\n        end = None",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "download_ohlcv",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def download_ohlcv(tickers: list[str], lookback_days: int, target_date: pd.Timestamp | None = None) -> pd.DataFrame:\n    now_utc = datetime.now(timezone.utc)\n    if target_date is None:\n        start = (now_utc - timedelta(days=lookback_days)).strftime(\"%Y-%m-%d\")\n        end = None\n    else:\n        target_dt = target_date.to_pydatetime().replace(tzinfo=timezone.utc)\n        start = (target_dt - timedelta(days=lookback_days)).strftime(\"%Y-%m-%d\")\n        end = (target_dt + timedelta(days=1)).strftime(\"%Y-%m-%d\")\n    data = yf.download(",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "calculate_signals",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def calculate_signals(\n    df: pd.DataFrame,\n    ticker: str,\n    bb_window: int,\n    bb_std: float,\n    ma_short: int,\n    ma_mid: int,\n    ma_long: int,\n    min_close_change_pct: float,\n    min_bb_breach_pct: float,",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "split_long_message",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def split_long_message(message: str, max_len: int = 3500) -> list[str]:\n    if len(message) <= max_len:\n        return [message]\n    lines = message.splitlines()\n    chunks = []\n    current = []\n    current_len = 0\n    for line in lines:\n        next_len = current_len + len(line) + 1\n        if next_len > max_len and current:",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "send_telegram",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def send_telegram(bot_token: str, chat_id: str, message: str):\n    url = f\"https://api.telegram.org/bot{bot_token}/sendMessage\"\n    for chunk in split_long_message(message):\n        payload = {\"chat_id\": chat_id, \"text\": chunk, \"parse_mode\": \"HTML\"}\n        max_retry = 4\n        for attempt in range(max_retry):\n            response = requests.post(url, data=payload, timeout=20)\n            if response.ok:\n                break\n            json_body = {}",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "send_telegram_messages",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def send_telegram_messages(bot_token: str, chat_id: str, messages: list[str]):\n    for message in messages:\n        send_telegram(bot_token, chat_id, message)\n        time.sleep(0.35)\ndef format_market_cap(market_cap: float | int | None) -> str:\n    if market_cap is None:\n        return \"N/A\"\n    value = float(market_cap)\n    if value >= 1_000_000_000_000:\n        return f\"${value / 1_000_000_000_000:.2f}T\"",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "format_market_cap",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def format_market_cap(market_cap: float | int | None) -> str:\n    if market_cap is None:\n        return \"N/A\"\n    value = float(market_cap)\n    if value >= 1_000_000_000_000:\n        return f\"${value / 1_000_000_000_000:.2f}T\"\n    if value >= 1_000_000_000:\n        return f\"${value / 1_000_000_000:.2f}B\"\n    if value >= 1_000_000:\n        return f\"${value / 1_000_000:.2f}M\"",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "truncate_text",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def truncate_text(text: str, max_length: int) -> str:\n    if len(text) <= max_length:\n        return text\n    return text[: max_length - 3].rstrip() + \"...\"\ndef extract_news_items(raw_news: list, news_count: int) -> list[dict]:\n    news_items = []\n    for item in raw_news or []:\n        if not isinstance(item, dict):\n            continue\n        title = item.get(\"title\")",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "extract_news_items",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def extract_news_items(raw_news: list, news_count: int) -> list[dict]:\n    news_items = []\n    for item in raw_news or []:\n        if not isinstance(item, dict):\n            continue\n        title = item.get(\"title\")\n        link = item.get(\"link\")\n        publisher = item.get(\"publisher\")\n        content = item.get(\"content\") if isinstance(item.get(\"content\"), dict) else None\n        if content:",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "build_chart_links",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def build_chart_links(ticker: str, exchange_code: str | None) -> dict:\n    exchange_map = {\n        \"NMS\": \"NASDAQ\",\n        \"NAS\": \"NASDAQ\",\n        \"NGM\": \"NASDAQ\",\n        \"NCM\": \"NASDAQ\",\n        \"NYQ\": \"NYSE\",\n        \"ASE\": \"AMEX\",\n        \"PCX\": \"AMEX\",\n        \"BTS\": \"NYSE\",",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "fetch_company_summary_fallback",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def fetch_company_summary_fallback(company_name: str | None, ticker: str) -> str | None:\n    query = (company_name or \"\").strip() or ticker\n    search_url = \"https://en.wikipedia.org/w/api.php\"\n    try:\n        search_response = requests.get(\n            search_url,\n            params={\n                \"action\": \"query\",\n                \"list\": \"search\",\n                \"srsearch\": query,",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "get_company_context",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def get_company_context(ticker: str, news_count: int) -> dict:\n    stock = yf.Ticker(ticker)\n    info = {}\n    try:\n        info = stock.info or {}\n    except Exception:\n        info = {}\n    market_cap = info.get(\"marketCap\")\n    if market_cap is None:\n        try:",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "build_messages",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def build_messages(results: list[dict], ma_short: int, ma_mid: int, ma_long: int, universe_label: str) -> list[str]:\n    now_str = datetime.now().strftime(\"%Y-%m-%d %H:%M:%S\")\n    if not results:\n        return [f\"📉 {universe_label} 스크리닝 결과 ({now_str})\\n조건 만족 자산 없음\"]\n    messages = [\n        \"\\n\".join(\n            [\n                f\"📉 {universe_label} 스크리닝 결과 ({now_str})\",\n                f\"조건 만족 자산: {len(results)}개\",\n                \"(조건: BB 하단 이탈 + 이평 역배열 + 갭 -3% 이하)\",",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "load_env_from_dotenv",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def load_env_from_dotenv(path: str = \".env\"):\n    if not os.path.exists(path):\n        return\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        for line in f:\n            line = line.strip()\n            if not line or line.startswith(\"#\") or \"=\" not in line:\n                continue\n            key, value = line.split(\"=\", 1)\n            key = key.strip()",
+        "detail": "screener",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "screener",
+        "description": "screener",
+        "peekOfCode": "def main():\n    parser = argparse.ArgumentParser(description=\"자산군별 기술적 조건 스크리너\")\n    parser.add_argument(\n        \"date\",\n        nargs=\"?\",\n        default=None,\n        help=\"기준일 (YYYY-MM-DD). 미입력 시 최신 거래일 기준\",\n    )\n    parser.add_argument(\n        \"--universe\",",
+        "detail": "screener",
+        "documentation": {}
+    }
+]
